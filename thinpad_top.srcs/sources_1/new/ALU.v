@@ -23,12 +23,29 @@ module ALU(
         result = 0;
     end*/
     reg [31:0] RTypeOut;
+    reg [31:0] CLZOut;
+    reg [15:0] val16;
+    reg [7:0] val8;
+    reg [3:0] val4;
+    
+    always @(A, B) begin
+        CLZOut = 0;
+        CLZOut[5] = (A == 0);
+        CLZOut[4] = (A[31:16] == 16'b0);
+        val16 = CLZOut[4] ? A[15:0] : A[31:16];
+        CLZOut[3] = (val16[15:8] == 8'b0);
+        val8 = CLZOut[3] ? val16[7:0] : val16[15:8];
+        CLZOut[2] = (val8[7:4] == 4'b0);
+        val4 = CLZOut[2] ? val8[3:0] : val8[7:4];
+        CLZOut[1] = (val4[3:2] == 2'b0);
+        CLZOut[0] = CLZOut[1] ? ~val4[1] : ~val4[3];
+    end
     
     always @(A, B, Func) begin
         case (Func)
             `ADDU: RTypeOut = A + B;
             `AND: RTypeOut = A & B;
-            `CLZ: RTypeOut = A + B; // to do
+            `CLZ: RTypeOut = CLZOut;
             `NOR: RTypeOut = ~(A | B);
             `OR: RTypeOut = A | B;
             `SLL: RTypeOut = B << (A[10:6]);
